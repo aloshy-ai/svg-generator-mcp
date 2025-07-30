@@ -1,23 +1,5 @@
-# Multi-stage build for optimal image size
-FROM node:18-alpine AS builder
-
-# Set working directory
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-
-# Install dependencies
-RUN npm ci --only=production
-
-# Copy source code
-COPY . .
-
-# Build the application
-RUN npm run build
-
-# Production stage
-FROM node:18-alpine AS production
+# Single-stage build for simplicity
+FROM node:18-alpine
 
 # Install Python for MFLUX support (optional)
 RUN apk add --no-cache python3 py3-pip
@@ -27,10 +9,13 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S mcp -u 1001
 WORKDIR /app
 
-# Copy built application and dependencies
-COPY --from=builder --chown=mcp:nodejs /app/dist ./dist
-COPY --from=builder --chown=mcp:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=mcp:nodejs /app/package.json ./
+# Copy package files and install dependencies
+COPY --chown=mcp:nodejs package*.json ./
+RUN npm ci
+
+# Copy source code and build
+COPY --chown=mcp:nodejs . .
+RUN npm run build
 
 # Switch to non-root user
 USER mcp
