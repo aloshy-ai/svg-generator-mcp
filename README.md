@@ -9,13 +9,23 @@ AI-powered MCP server for generating high-quality SVG illustrations using MFLUX 
 
 ## Quick Start
 
-### 🚀 One-Line Setup (Recommended)
+### 🚀 Two-Step Setup
 
-**Step 1: Run the server manually (recommended)**
+**Step 1: Download and test the server (required)**
 ```bash
+# This will download the Docker image (~500MB) and test the server
 docker run --rm ghcr.io/aloshy-ai/svg-generator-mcp:latest
 ```
-_✅ **Pro Tip**: This is to prevent initial startup time. after adding the mcp server configuration, due to download sizes of images and models._
+> ⚠️ **Important**: You must run this first! Without it, your MCP client will hang for 2-3 minutes during the initial Docker download. Press `Ctrl+C` to stop the server once you see it's working.
+
+**Verify the server is ready:**
+```bash
+# Check that the Docker image is now cached locally
+docker images | grep svg-generator
+
+# Expected output: You should see the image listed
+# ghcr.io/aloshy-ai/svg-generator-mcp   latest   ...
+```
 
 **Step 2: Add to your MCP client configuration (example for Claude Desktop):**
 ```json
@@ -28,15 +38,10 @@ _✅ **Pro Tip**: This is to prevent initial startup time. after adding the mcp 
   }
 }
 ```
-**That's it!** The server starts automatically when your MCP client connects.
+**That's it!** The server starts instantly when your MCP client connects (since the Docker image is already cached).
 
-locally!
-> 
-> 👀 **Monitor Progress**: Watch the startup process with:
+> 👀 **Monitor Progress** (if needed): Watch the startup process with:
 > ```bash
-> # Check if Docker is downloading the image
-> docker pull ghcr.io/aloshy-ai/svg-generator-mcp:latest
-> 
 > # Watch for running containers
 > docker ps | grep svg-generator
 > 
