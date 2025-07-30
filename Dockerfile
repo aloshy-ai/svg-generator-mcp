@@ -9,9 +9,9 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S mcp -u 1001
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Copy package files and install dependencies (skip prepare script)
 COPY --chown=mcp:nodejs package*.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Copy source code and build
 COPY --chown=mcp:nodejs . .
