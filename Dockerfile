@@ -2,7 +2,7 @@
 FROM node:18-alpine
 
 # Install Python and dependencies for FLUX/MFLUX support
-RUN apk add --no-cache python3 py3-pip git build-base python3-dev
+RUN apk add --no-cache python3 py3-pip git build-base python3-dev linux-headers
 
 # Create a virtual environment
 RUN python3 -m venv /app/venv
