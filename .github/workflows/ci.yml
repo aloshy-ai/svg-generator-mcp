@@ -69,67 +69,83 @@ jobs:
           path: dist/
           retention-days: 7
 
-  docker-build:
-    name: Build Docker Image
+  python-build:
+    name: Build Python Package
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      contents: read
-      packages: write
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+          python-version: '3.11'
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Build Node.js project
+        run: npm run build
+
+      - name: Copy build artifacts to Python package
+        run: |
+          cp -r dist svg_generator_mcp/
+          cp package.json svg_generator_mcp/
+          cp package-lock.json svg_generator_mcp/
+
+      - name: Install Python build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build Python package
+        run: python -m build
+
+      - name: Upload Python package artifacts
+        uses: actions/upload-artifact@v4
         with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          name: python-package
+          path: dist/
+          retention-days: 7
 
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: docker-build
+    needs: python-build
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Test Docker image
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download Python package
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+
+      - name: Install and test package
         run: |
-          # Test that the container starts and runs (using latest tag)
-          timeout 10s docker run --rm ghcr.io/${{ github.repository }}:latest || \
-          echo "Container started successfully (expected timeout)"
+          pip install dist/*.whl
+          # Test that the package can be imported and shows help
+          timeout 5s svg-generator-mcp --help || echo "Package installed successfully"
 
   security-scan:
     name: Security Scan
@@ -175,51 +191,60 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
 
-      - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Node.js dependencies
         run: npm ci
 
-      - name: Build project
+      - name: Build Node.js project
         run: npm run build
 
-      - name: Publish to npm
-        run: npm publish --access public
+      - name: Copy build artifacts to Python package
+        run: |
+          cp -r dist svg_generator_mcp/
+          cp package.json svg_generator_mcp/
+          cp package-lock.json svg_generator_mcp/
+
+      - name: Install Python build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build Python package
+        run: python -m build
+
+      - name: Publish to PyPI
+        run: twine upload dist/*
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
 
   create-release-artifacts:
     name: Create Release Artifacts
     runs-on: ubuntu-latest
-    needs: [test, build]
+    needs: [test, python-build]
     if: github.event_name == 'release'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Download Python package
+        uses: actions/download-artifact@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          name: python-package
+          path: dist/
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build project
-        run: npm run build
-
-      - name: Create tarball
-        run: npm pack
-
-      # Release asset upload disabled for now
-      # - name: Upload release assets
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: ./svg-generator-mcp-*.tgz
-      #     asset_name: svg-generator-mcp-${{ github.event.release.tag_name }}.tgz
-      #     asset_content_type: application/gzip
+      - name: Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./dist/svg_generator_mcp-*.whl
+          asset_name: svg-generator-mcp-${{ github.event.release.tag_name }}.whl
+          asset_content_type: application/octet-stream

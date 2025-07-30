@@ -3,16 +3,24 @@ import { logger } from "../utils/logger.js";
 import { ModelConfig, GenerationRequest, GenerationResult, GenerationHistory } from "../types/index.js";
 import path from "path";
 import fs from "fs/promises";
+import os from "os";
 
 export class MFLUXService {
   private isInitialized = false;
-  private historyFile = "generation_history.json";
+  private outputDir!: string;
+  private historyFile!: string;
   private history: GenerationHistory[] = [];
   private fluxBackend: 'mflux' | 'flux' | 'demo' = 'demo';
 
   async initialize(): Promise<void> {
     try {
       logger.info("Initializing FLUX service...");
+      
+      // Create output directory in temp folder
+      this.outputDir = path.join(os.tmpdir(), 'svg-generator-mcp');
+      await fs.mkdir(this.outputDir, { recursive: true });
+      this.historyFile = path.join(this.outputDir, 'generation_history.json');
+      logger.info(`Output directory created: ${this.outputDir}`);
       
       // Check for available FLUX backends
       this.fluxBackend = await this.detectFluxBackend();
@@ -132,7 +140,7 @@ except ImportError as e:
       return generationResult;
     }
 
-    const outputPath = `output_${Date.now()}.png`;
+    const outputPath = path.join(this.outputDir, `output_${Date.now()}.png`);
     
     try {
       logger.info(`Starting image generation with ${this.fluxBackend}: ${request.prompt}`);
@@ -277,7 +285,7 @@ try:
     )
     
     # Save the image
-    image.save(path="${outputPath}")
+    image.save("${outputPath}")
     print(f"Image saved to: ${outputPath}")
     print("GENERATION_COMPLETED")
     

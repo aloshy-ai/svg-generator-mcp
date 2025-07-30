@@ -3,13 +3,20 @@ import { logger } from "../utils/logger.js";
 import { SVGResult, OptimizationOptions } from "../types/index.js";
 import path from "path";
 import fs from "fs/promises";
+import os from "os";
 
 export class SVGProcessor {
   private isInitialized = false;
+  private outputDir!: string;
 
   async initialize(): Promise<void> {
     try {
       logger.info("Initializing SVG Processor...");
+      
+      // Create output directory in temp folder
+      this.outputDir = path.join(os.tmpdir(), 'svg-generator-mcp');
+      await fs.mkdir(this.outputDir, { recursive: true });
+      logger.info(`Output directory created: ${this.outputDir}`);
       
       // Test sharp functionality
       await this.testSharpInstallation();
@@ -66,10 +73,11 @@ export class SVGProcessor {
       // Generate unique filename
       const timestamp = Date.now();
       const filename = `svg_${timestamp}.svg`;
-      const uri = `file://${path.resolve(filename)}`;
+      const filepath = path.join(this.outputDir, filename);
+      const uri = `file://${filepath}`;
       
       // Save SVG file
-      await fs.writeFile(filename, svgContent, 'utf-8');
+      await fs.writeFile(filepath, svgContent, 'utf-8');
       
       logger.info(`SVG created: ${filename}`);
       
@@ -192,10 +200,11 @@ export class SVGProcessor {
       // Generate unique filename for optimized SVG
       const timestamp = Date.now();
       const filename = `optimized_svg_${timestamp}.svg`;
-      const uri = `file://${path.resolve(filename)}`;
+      const filepath = path.join(this.outputDir, filename);
+      const uri = `file://${filepath}`;
       
       // Save optimized SVG
-      await fs.writeFile(filename, optimizedContent, 'utf-8');
+      await fs.writeFile(filepath, optimizedContent, 'utf-8');
       
       logger.info(`Optimized SVG saved: ${filename}`);
       

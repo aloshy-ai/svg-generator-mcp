@@ -52,6 +52,12 @@
 
 ## 🔧 Technical Architecture
 
+### Deployment
+- **Python Packaging**: Available on PyPI for uvx/pip installation
+- **uvx Integration**: Automatic dependency management and isolation  
+- **Cross-Platform**: Works on macOS, Linux, and Windows
+- **Node.js Runtime**: Embedded TypeScript server with Python wrapper
+
 ### Services
 - **MFLUXService**: Handles AI image generation with demo mode fallback
 - **ModelService**: Manages model discovery and status reporting  

@@ -1,57 +1,64 @@
 # SVG Generator MCP Server
 
 [![CI/CD Pipeline](https://github.com/aloshy-ai/svg-generator-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/aloshy-ai/svg-generator-mcp/actions/workflows/ci.yml)
-[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://github.com/aloshy-ai/svg-generator-mcp/pkgs/container/svg-generator-mcp)
+[![PyPI Version](https://img.shields.io/pypi/v/svg-generator-mcp?logo=pypi)](https://pypi.org/project/svg-generator-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
 
-AI-powered MCP server for generating high-quality SVG illustrations using FLUX/MFLUX with multi-platform support.
+AI-powered MCP server for generating high-quality SVG illustrations using FLUX/MFLUX with automatic dependency management.
 
 ## Quick Start
 
-### 🚀 Two-Step Setup
+### 🚀 One-Command Setup
 
-**Step 1: Download and test the server (required)**
+**Install and configure with uvx (recommended):**
 ```bash
-# This will download the Docker image (~500MB) and test the server
-docker run --rm ghcr.io/aloshy-ai/svg-generator-mcp:latest
-```
-> ⚠️ **Important**: You must run this first! Without it, your MCP client will hang for 2-3 minutes during the initial Docker download. Press `Ctrl+C` to stop the server once you see it's working.
-
-**Verify the server is ready:**
-```bash
-# Check that the Docker image is now cached locally
-docker images | grep svg-generator
-
-# Expected output: You should see the image listed
-# ghcr.io/aloshy-ai/svg-generator-mcp   latest   ...
+# Install using uvx (automatically handles all dependencies)
+uvx svg-generator-mcp
 ```
 
-**Step 2: Add to your MCP client configuration (example for Claude Desktop):**
+**Add to your MCP client configuration (example for Claude Desktop):**
 ```json
 {
   "mcpServers": {
     "svg-generator": {
-      "command": "docker",
-      "args": ["run", "--rm", "-i", "ghcr.io/aloshy-ai/svg-generator-mcp:latest"]
+      "command": "uvx",
+      "args": ["svg-generator-mcp"]
     }
   }
 }
 ```
-**That's it!** The server starts instantly when your MCP client connects (since the Docker image is already cached).
 
-> 👀 **Monitor Progress** (if needed): Watch the startup process with:
-> ```bash
-> # Watch for running containers
-> docker ps | grep svg-generator
-> 
-> # View server logs once container starts
-> docker logs <container-id>
-> ```
+**That's it!** The server starts instantly with automatic dependency management.
+
+### 🐍 Alternative: Direct Python Installation
+
+```bash
+# Install from PyPI
+pip install svg-generator-mcp
+
+# Run directly
+svg-generator-mcp
+```
+
+**Claude Desktop configuration for pip install:**
+```json
+{
+  "mcpServers": {
+    "svg-generator": {
+      "command": "svg-generator-mcp"
+    }
+  }
+}
+```
 
 ## Prerequisites
-- **Docker** - [Install Docker](https://docs.docker.com/get-docker/)
+- **Python 3.8+** - [Install Python](https://www.python.org/downloads/)
+- **Node.js 18+** - [Install Node.js](https://nodejs.org/) (for AI processing)
 - **MCP Client** - Any Model Context Protocol compatible client
+
+> 💡 **uvx automatically manages dependencies** - Node.js deps are installed on first run
 
 ## Available Tools
 
@@ -100,12 +107,12 @@ npm run dev
 Automated GitHub Actions pipeline ensures code quality and seamless deployment:
 
 - ✅ **Automated Testing** - Full test suite on every push and PR
-- 🐳 **Docker Publishing** - Multi-platform images published to [GitHub Container Registry](https://github.com/aloshy-ai/svg-generator-mcp/pkgs/container/svg-generator-mcp)
-- 🏗️ **Multi-Platform Support** - Native AMD64 and ARM64 builds
+- 🐍 **PyPI Publishing** - Python packages published to [PyPI](https://pypi.org/project/svg-generator-mcp/)
+- 🏗️ **Cross-Platform Support** - Works on macOS, Linux, and Windows
 - 🔒 **Security Scanning** - Vulnerability scanning with npm audit
 - 📦 **Automated Releases** - Tagged releases trigger production builds
 
-All Docker images are available at: `ghcr.io/aloshy-ai/svg-generator-mcp:latest`
+Install the development version: `pip install svg-generator-mcp`
 
 ## 🧠 How It Works
 1. **🎨 Style Analysis** - Prompt analyzed for desired visual style and composition
@@ -118,26 +125,30 @@ All Docker images are available at: `ghcr.io/aloshy-ai/svg-generator-mcp:latest`
 - **AI Models**: FLUX/MFLUX with architecture-optimized backends (MFLUX for Apple Silicon, FLUX for Intel/AMD)
 - **Processing**: Sharp for image optimization and SVG conversion
 - **Protocol**: Model Context Protocol (MCP) with stdio transport
-- **Deployment**: Docker with multi-platform support
-- **CI/CD**: GitHub Actions with automated testing and publishing
+- **Deployment**: Python packaging with uvx for automatic dependency management
+- **CI/CD**: GitHub Actions with PyPI publishing and automated testing
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-#### MCP Connection Issues
-- **Long startup time**: First run takes 2-3 minutes for Docker image download and initialization
-  - Monitor with: `docker pull ghcr.io/aloshy-ai/svg-generator-mcp:latest`
-- **Server not starting**: Check Docker is running and image is available
-  - Check containers: `docker ps -a | grep svg-generator`
-  - View logs: `docker logs <container-id>`
-- **Tool not appearing**: Verify MCP client configuration syntax
-- **Generation failures**: Server runs in demo mode without MFLUX - check logs
+#### Installation Issues
+- **uvx not found**: Install with `pip install pipx && pipx install uv`
+- **Python version**: Requires Python 3.8+. Check with `python --version`
+- **Node.js missing**: Install Node.js 18+ from [nodejs.org](https://nodejs.org/)
+- **Permission errors**: Try `pip install --user svg-generator-mcp` instead
 
-#### Docker Issues  
-- **Platform compatibility**: Multi-platform images support both AMD64 and ARM64
-- **Container startup failures**: Check logs with `docker logs <container-id>`
-- **Permission errors**: Ensure Docker daemon is running and accessible
+#### MCP Connection Issues
+- **Server not starting**: Check that both Python and Node.js are in PATH
+- **Tool not appearing**: Verify MCP client configuration syntax
+- **Generation failures**: Server runs in demo mode without AI models - this is normal
+- **Slow first startup**: Node.js dependencies install on first run (1-2 minutes)
+
+#### AI Generation Issues
+- **Demo mode only**: Install AI dependencies manually if needed:
+  - Apple Silicon: `pip install mflux`
+  - Other platforms: `pip install torch diffusers transformers`
+- **Model download failures**: AI features are optional - server works without them
 
 ### Getting Help
 - 📋 Check [Issues](https://github.com/aloshy-ai/svg-generator-mcp/issues) for common problems
