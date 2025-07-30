@@ -57,29 +57,12 @@ Issues = "https://github.com/aloshy-ai/svg-generator-mcp/issues"
 [project.scripts]
 svg-generator-mcp = "svg_generator_mcp.main:main"
 
-[tool.hatch.build]
-# Include Node.js build artifacts and dependencies
-include = [
-    "svg_generator_mcp/",
-    "dist/",
-    "package.json",
-    "package-lock.json",
-    "node_modules/",
-]
-exclude = [
-    "src/",
-    "*.test.ts",
-    "*.test.js",
-    ".github/",
-    "Dockerfile",
-    "docker-compose.yml",
-    "*.md",
-]
-
-# Node.js build is handled manually in CI/CD pipeline
-
 [tool.hatch.build.targets.wheel]
 packages = ["svg_generator_mcp"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"svg_generator_mcp/dist" = "svg_generator_mcp/dist"
+"svg_generator_mcp/node_modules" = "svg_generator_mcp/node_modules"
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -92,6 +75,10 @@ include = [
     "LICENSE",
     "pyproject.toml",
 ]
+
+[tool.hatch.build.targets.sdist.force-include]
+"svg_generator_mcp/dist" = "svg_generator_mcp/dist"
+"svg_generator_mcp/node_modules" = "svg_generator_mcp/node_modules"
 
 [tool.hatch.version]
 path = "svg_generator_mcp/__init__.py"

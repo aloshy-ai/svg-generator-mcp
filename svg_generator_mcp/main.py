@@ -31,7 +31,13 @@ def check_npm_availability():
 
 def get_package_root():
     """Get the root directory of the Python package."""
-    return Path(__file__).parent
+    try:
+        # Try to use __file__ if available
+        return Path(__file__).parent
+    except NameError:
+        # Fallback for uvx environments - find the package installation
+        import svg_generator_mcp
+        return Path(svg_generator_mcp.__file__).parent
 
 
 def install_node_dependencies():
@@ -44,19 +50,29 @@ def install_node_dependencies():
         print("Error: package.json not found in package", file=sys.stderr)
         sys.exit(1)
     
+    # Check if dependencies are already available (for packaged distributions)
+    if node_modules.exists():
+        # Dependencies already present, skip npm install
+        return
+    
+    # Only try npm install if npm is available
+    if not shutil.which("npm"):
+        print("Error: npm not found and no pre-installed dependencies", file=sys.stderr)
+        print("In uvx environments, dependencies should be pre-bundled", file=sys.stderr)
+        sys.exit(1)
+        
     # Install dependencies if node_modules doesn't exist
-    if not node_modules.exists():
-        print("Installing Node.js dependencies...", file=sys.stderr)
-        try:
-            subprocess.run(
-                ["npm", "install", "--production"],
-                cwd=package_root,
-                check=True,
-                capture_output=True
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Error installing Node.js dependencies: {e}", file=sys.stderr)
-            sys.exit(1)
+    print("Installing Node.js dependencies...", file=sys.stderr)
+    try:
+        subprocess.run(
+            ["npm", "install", "--production"],
+            cwd=package_root,
+            check=True,
+            capture_output=True
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing Node.js dependencies: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def install_python_dependencies():
@@ -115,7 +131,7 @@ def main():
     
     # Check system requirements
     check_node_availability()
-    check_npm_availability()
+    # Note: npm check removed since dependencies are pre-bundled in uvx packages
     
     # Get package paths
     package_root = get_package_root()
