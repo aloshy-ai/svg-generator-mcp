@@ -1,8 +1,8 @@
 # SVG Generator MCP Server
 
 [![CI/CD Pipeline](https://github.com/aloshy-ai/svg-generator-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/aloshy-ai/svg-generator-mcp/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/aloshy-ai/svg-generator-mcp/branch/main/graph/badge.svg)](https://codecov.io/gh/aloshy-ai/svg-generator-mcp)
-[![npm version](https://badge.fury.io/js/svg-generator-mcp.svg)](https://badge.fury.io/js/svg-generator-mcp)
+
+> **Note**: This package is not yet published to npm registry. Use source installation for now.
 
 A professional Model Context Protocol (MCP) server for generating high-quality SVG illustrations using MFLUX with specialized models including Vector SVG Laser LoRA and FluxxxMix Checkpoint for colorful illustrations.
 
@@ -25,19 +25,25 @@ A professional Model Context Protocol (MCP) server for generating high-quality S
 
 ## 🛠️ Installation
 
-### For Users
+### Current Installation (Development/Source)
 
 ```bash
-npm install -g svg-generator-mcp
-```
-
-### For Development
-
-```bash
+# Clone the repository
 git clone https://github.com/aloshy-ai/svg-generator-mcp.git
 cd svg-generator-mcp
+
+# Install dependencies and build
 npm install
 npm run build
+
+# Optional: Link globally for system-wide access
+npm link
+```
+
+### Future npm Installation (Coming Soon)
+```bash
+# This will be available once published to npm registry
+npm install -g svg-generator-mcp
 ```
 
 ## ⚙️ Model Setup
@@ -68,8 +74,19 @@ Add to your Claude Desktop configuration:
 {
   "mcpServers": {
     "svg-generator": {
-      "command": "npx",
-      "args": ["svg-generator-mcp"]
+      "command": "node",
+      "args": ["/absolute/path/to/svg-generator-mcp/dist/index.js"]
+    }
+  }
+}
+```
+
+Or if you used `npm link`:
+```json
+{
+  "mcpServers": {
+    "svg-generator": {
+      "command": "svg-generator-mcp"
     }
   }
 }
@@ -78,10 +95,13 @@ Add to your Claude Desktop configuration:
 ### Direct Usage
 
 ```bash
-# Start the MCP server
-npx svg-generator-mcp
+# Start the MCP server (from project directory)
+npm start
 
-# Or if installed globally
+# Or directly with node
+node dist/index.js
+
+# Or if you used npm link
 svg-generator-mcp
 
 # Note: Server runs in demo mode if MFLUX is not installed
@@ -196,18 +216,17 @@ The server follows a clean, modular architecture:
 ```
 src/
 ├── server/                 # MCP server implementation
-│   ├── svg-generator-server.ts
-│   └── svg-generator-server.test.ts
+│   └── svg-generator-server.ts
 ├── services/              # Core business logic
 │   ├── mflux-service.ts   # MFLUX integration
 │   ├── model-service.ts   # Model management
-│   ├── svg-processor.ts   # SVG processing
-│   └── *.test.ts         # Service tests
+│   └── svg-processor.ts   # SVG processing
 ├── types/                 # TypeScript type definitions
 │   └── index.ts
 ├── utils/                 # Utility functions
 │   ├── logger.ts         # Logging system
 │   └── logger.test.ts
+├── smoke.test.ts          # Basic functionality tests
 └── index.ts              # Main entry point
 ```
 
@@ -230,10 +249,10 @@ src/
 
 The project includes automated CI/CD with:
 
-- **Testing**: Unit tests, integration tests, and coverage reporting
-- **Quality**: Linting, type checking, and code formatting
-- **Security**: Dependency scanning and security audits
-- **Publishing**: Automated npm publishing on releases
+- **Testing**: Basic unit tests with Node.js test runner
+- **Quality**: TypeScript type checking and build verification
+- **Security**: npm audit for dependency scanning
+- **Publishing**: CI/CD pipeline ready (npm publishing not yet configured)
 
 ## 📊 Performance
 

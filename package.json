@@ -4,6 +4,9 @@
   "description": "Professional MCP Server for generating SVG illustrations using MFLUX with Vector SVG Laser LoRA and FluxxxMix Checkpoint models",
   "main": "dist/index.js",
   "type": "module",
+  "bin": {
+    "svg-generator-mcp": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx --watch src/index.ts",
