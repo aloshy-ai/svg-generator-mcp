@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
 
-AI-powered MCP server for generating high-quality SVG illustrations using MFLUX with specialized models.
+AI-powered MCP server for generating high-quality SVG illustrations using FLUX/MFLUX with multi-platform support.
 
 ## Quick Start
 
@@ -109,13 +109,13 @@ All Docker images are available at: `ghcr.io/aloshy-ai/svg-generator-mcp:latest`
 
 ## 🧠 How It Works
 1. **🎨 Style Analysis** - Prompt analyzed for desired visual style and composition
-2. **⚡ AI Generation** - MFLUX with specialized LoRA models creates high-quality images
+2. **⚡ AI Generation** - FLUX/MFLUX with optimized backends creates high-quality images
 3. **🔧 SVG Conversion** - Images converted to optimized SVG format
 4. **📄 Delivery** - Clean SVG delivered via MCP protocol to your client
 
 ## 🛠️ Tech Stack
 - **Backend**: TypeScript with clean service layer architecture
-- **AI Models**: MFLUX with Vector SVG Laser LoRA and FluxxxMix Checkpoint
+- **AI Models**: FLUX/MFLUX with architecture-optimized backends (MFLUX for Apple Silicon, FLUX for Intel/AMD)
 - **Processing**: Sharp for image optimization and SVG conversion
 - **Protocol**: Model Context Protocol (MCP) with stdio transport
 - **Deployment**: Docker with multi-platform support

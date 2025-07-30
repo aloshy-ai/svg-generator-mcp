@@ -8,20 +8,18 @@ export class MFLUXService {
   private isInitialized = false;
   private historyFile = "generation_history.json";
   private history: GenerationHistory[] = [];
-  private mfluxAvailable = false;
+  private fluxBackend: 'mflux' | 'flux' | 'demo' = 'demo';
 
   async initialize(): Promise<void> {
     try {
-      logger.info("Initializing MFLUX service...");
+      logger.info("Initializing FLUX service...");
       
-      // Check if MFLUX is installed (non-blocking)
-      try {
-        await this.checkMFLUXInstallation();
-        this.mfluxAvailable = true;
-        logger.info("MFLUX is available and ready");
-      } catch (error) {
-        this.mfluxAvailable = false;
-        logger.warn("MFLUX is not available - server will run in demo mode:", error);
+      // Check for available FLUX backends
+      this.fluxBackend = await this.detectFluxBackend();
+      logger.info(`Using FLUX backend: ${this.fluxBackend}`);
+      
+      if (this.fluxBackend === 'demo') {
+        logger.warn("No FLUX backend available - server will run in demo mode");
       }
       
       // Load generation history
@@ -35,7 +33,36 @@ export class MFLUXService {
     }
   }
 
+  private async detectFluxBackend(): Promise<'mflux' | 'flux' | 'demo'> {
+    // Try MFLUX first (preferred for Apple Silicon)
+    try {
+      await this.runPythonScript(`
+import mflux
+print("MFLUX_AVAILABLE")
+`);
+      return 'mflux';
+    } catch (error) {
+      logger.debug("MFLUX not available:", error);
+    }
+
+    // Try FLUX with diffusers (for Intel/AMD)
+    try {
+      await this.runPythonScript(`
+import torch
+from diffusers import FluxPipeline
+print("FLUX_AVAILABLE")
+`);
+      return 'flux';
+    } catch (error) {
+      logger.debug("FLUX not available:", error);
+    }
+
+    // Fall back to demo mode
+    return 'demo';
+  }
+
   private async checkMFLUXInstallation(): Promise<void> {
+    // Legacy method - kept for compatibility
     try {
       const result = await this.runPythonScript(`
 import sys
@@ -66,8 +93,8 @@ except ImportError as e:
 
     const timestamp = new Date().toISOString();
     
-    // If MFLUX is not available, return a demo response
-    if (!this.mfluxAvailable) {
+    // Handle different backends
+    if (this.fluxBackend === 'demo') {
       logger.info(`Demo mode: simulating image generation for prompt: ${request.prompt}`);
       
       // Create a demo SVG as a placeholder
@@ -108,13 +135,15 @@ except ImportError as e:
     const outputPath = `output_${Date.now()}.png`;
     
     try {
-      logger.info(`Starting image generation: ${request.prompt}`);
+      logger.info(`Starting image generation with ${this.fluxBackend}: ${request.prompt}`);
       
       // Prepare the model configuration based on style
       const modelConfig = this.getModelConfig(request.style);
       
-      // Create Python script for image generation
-      const pythonScript = this.createGenerationScript(request, modelConfig, outputPath);
+      // Create Python script for image generation based on backend
+      const pythonScript = this.fluxBackend === 'mflux' 
+        ? this.createMFLUXGenerationScript(request, modelConfig, outputPath)
+        : this.createFLUXGenerationScript(request, modelConfig, outputPath);
       
       // Run the generation
       const result = await this.runPythonScript(pythonScript);
@@ -199,7 +228,7 @@ except ImportError as e:
     }
   }
 
-  private createGenerationScript(
+  private createMFLUXGenerationScript(
     request: GenerationRequest,
     modelConfig: ModelConfig,
     outputPath: string
@@ -249,6 +278,66 @@ try:
     
     # Save the image
     image.save(path="${outputPath}")
+    print(f"Image saved to: ${outputPath}")
+    print("GENERATION_COMPLETED")
+    
+except Exception as e:
+    print(f"GENERATION_FAILED: {str(e)}")
+    sys.exit(1)
+`;
+  }
+
+  private createFLUXGenerationScript(
+    request: GenerationRequest,
+    modelConfig: ModelConfig,
+    outputPath: string
+  ): string {
+    // Enhanced prompt based on style
+    const enhancedPrompt = this.enhancePrompt(request.prompt, request.style);
+    
+    return `
+import sys
+import os
+import torch
+from diffusers import FluxPipeline
+
+try:
+    print("Loading FLUX model with diffusers...")
+    
+    # Initialize FLUX pipeline for CPU
+    pipe = FluxPipeline.from_pretrained(
+        "black-forest-labs/FLUX.1-dev",
+        torch_dtype=torch.float32,  # Use float32 for CPU
+        device_map="cpu"
+    )
+    
+    print("Model loaded successfully")
+    
+    print("Starting image generation...")
+    print(f"Prompt: ${enhancedPrompt}")
+    print(f"Style: ${request.style}")
+    print(f"Steps: ${request.steps}")
+    print(f"Guidance Scale: ${request.guidance_scale}")
+    print(f"Dimensions: ${request.width}x${request.height}")
+    ${request.seed ? `print(f"Seed: ${request.seed}")` : ''}
+    
+    # Set seed if provided
+    ${request.seed ? `
+    generator = torch.Generator().manual_seed(${request.seed})
+    ` : 'generator = None'}
+    
+    # Generate image
+    image = pipe(
+        prompt="${enhancedPrompt}",
+        height=${request.height},
+        width=${request.width},
+        num_inference_steps=${request.steps},
+        guidance_scale=${request.guidance_scale},
+        generator=generator
+    ).images[0]
+    
+    # Save the image
+    image.save("${outputPath}")
     print(f"Image saved to: ${outputPath}")
     print("GENERATION_COMPLETED")
     

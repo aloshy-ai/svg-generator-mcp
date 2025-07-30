@@ -1,8 +1,18 @@
 # Single-stage build for simplicity
 FROM node:18-alpine
 
-# Install Python for MFLUX support (optional)
-RUN apk add --no-cache python3 py3-pip
+# Install Python and dependencies for FLUX/MFLUX support
+RUN apk add --no-cache python3 py3-pip git build-base python3-dev
+
+# Install FLUX/MFLUX based on architecture
+RUN if [ "$(uname -m)" = "aarch64" ]; then \
+    # Apple Silicon (ARM64) - install MFLUX
+    pip3 install --no-cache-dir mflux; \
+else \
+    # Intel/AMD (x86_64) - install FLUX with CPU support
+    pip3 install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
+    pip3 install --no-cache-dir diffusers transformers accelerate; \
+fi
 
 # Create app directory and user
 RUN addgroup -g 1001 -S nodejs && \
