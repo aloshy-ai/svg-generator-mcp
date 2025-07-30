@@ -8,13 +8,21 @@ export class MFLUXService {
   private isInitialized = false;
   private historyFile = "generation_history.json";
   private history: GenerationHistory[] = [];
+  private mfluxAvailable = false;
 
   async initialize(): Promise<void> {
     try {
       logger.info("Initializing MFLUX service...");
       
-      // Check if MFLUX is installed
-      await this.checkMFLUXInstallation();
+      // Check if MFLUX is installed (non-blocking)
+      try {
+        await this.checkMFLUXInstallation();
+        this.mfluxAvailable = true;
+        logger.info("MFLUX is available and ready");
+      } catch (error) {
+        this.mfluxAvailable = false;
+        logger.warn("MFLUX is not available - server will run in demo mode:", error);
+      }
       
       // Load generation history
       await this.loadHistory();
@@ -57,6 +65,46 @@ except ImportError as e:
     }
 
     const timestamp = new Date().toISOString();
+    
+    // If MFLUX is not available, return a demo response
+    if (!this.mfluxAvailable) {
+      logger.info(`Demo mode: simulating image generation for prompt: ${request.prompt}`);
+      
+      // Create a demo SVG as a placeholder
+      const demoSvg = this.createDemoSVG(request);
+      const demoBuffer = Buffer.from(demoSvg, 'utf-8');
+      
+      const generationResult: GenerationResult = {
+        uri: `data:image/svg+xml;base64,${demoBuffer.toString('base64')}`,
+        data: demoBuffer,
+        metadata: {
+          prompt: request.prompt,
+          style: request.style,
+          width: request.width,
+          height: request.height,
+          steps: request.steps,
+          guidance_scale: request.guidance_scale,
+          seed: request.seed,
+          model: "demo-mode",
+          lora: "demo-lora",
+          timestamp,
+        },
+      };
+
+      // Add to history
+      await this.addToHistory({
+        timestamp,
+        prompt: request.prompt,
+        style: request.style,
+        status: "completed",
+        outputPath: "demo-svg",
+        metadata: generationResult.metadata,
+      });
+
+      logger.info("Demo image generation completed");
+      return generationResult;
+    }
+
     const outputPath = `output_${Date.now()}.png`;
     
     try {
@@ -228,13 +276,11 @@ except Exception as e:
         pythonOptions: ['-u'], // Unbuffered output
       };
 
-      PythonShell.runString(script, options, (err, results) => {
-        if (err) {
-          reject(err);
-        } else {
-          const output = results?.join('\n') || '';
-          resolve(output);
-        }
+      PythonShell.runString(script, options).then((results) => {
+        const output = results?.join('\n') || '';
+        resolve(output);
+      }).catch((err) => {
+        reject(err);
       });
     });
   }
@@ -277,5 +323,53 @@ except Exception as e:
 
   async getGenerationHistory(limit: number = 10): Promise<GenerationHistory[]> {
     return this.history.slice(0, limit);
+  }
+
+  private createDemoSVG(request: GenerationRequest): string {
+    const { width, height, style, prompt } = request;
+    
+    // Create different demo SVGs based on style
+    const colors = style === 'laser' ? ['#000000', '#ffffff'] : 
+                  style === 'vector' ? ['#4A90E2', '#7ED321', '#F5A623', '#D0021B'] :
+                  ['#E94B3C', '#6BCF7F', '#4A90E2', '#F08F26', '#BD10E0'];
+    
+    const shapes = [];
+    
+    // Add some geometric shapes based on style
+    if (style === 'vector' || style === 'laser') {
+      // Clean geometric shapes
+      shapes.push(`<rect x="50" y="50" width="100" height="100" fill="${colors[0]}" opacity="0.8"/>`);
+      shapes.push(`<circle cx="${width - 100}" cy="100" r="50" fill="${colors[1]}" opacity="0.6"/>`);
+      shapes.push(`<polygon points="50,${height - 50} 150,${height - 100} 250,${height - 50}" fill="${colors[2] || colors[0]}" opacity="0.7"/>`);
+    } else {
+      // Colorful artistic shapes
+      for (let i = 0; i < 5; i++) {
+        const x = Math.floor((width / 6) * (i + 1));
+        const y = Math.floor(height / 2 + Math.sin(i) * 50);
+        const color = colors[i % colors.length];
+        shapes.push(`<circle cx="${x}" cy="${y}" r="${20 + i * 5}" fill="${color}" opacity="0.7"/>`);
+      }
+    }
+    
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .demo-text { font-family: Arial, sans-serif; font-size: 14px; fill: #333; }
+      .demo-subtitle { font-family: Arial, sans-serif; font-size: 10px; fill: #666; }
+    </style>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="100%" height="100%" fill="${style === 'laser' ? '#ffffff' : '#f8f9fa'}"/>
+  
+  <!-- Demo shapes -->
+  ${shapes.join('\n  ')}
+  
+  <!-- Demo text -->
+  <text x="20" y="30" class="demo-text">Demo SVG - Style: ${style}</text>
+  <text x="20" y="45" class="demo-subtitle">Prompt: ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}</text>
+  <text x="20" y="${height - 20}" class="demo-subtitle">⚠️ This is a demo. Install MFLUX for AI generation.</text>
+</svg>`;
   }
 }

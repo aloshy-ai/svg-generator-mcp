@@ -83,6 +83,9 @@ npx svg-generator-mcp
 
 # Or if installed globally
 svg-generator-mcp
+
+# Note: Server runs in demo mode if MFLUX is not installed
+# Demo mode provides placeholder SVG generation for testing
 ```
 
 ## 🔧 Available Tools
@@ -159,27 +162,21 @@ Retrieve the history of recent SVG generations.
 # Run all tests
 npm test
 
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
+# Note: Coverage reporting and watch mode are not yet implemented
+# Run tests in development (alternative)
 npm run dev
 ```
 
 ### Code Quality
 
 ```bash
-# Lint code
-npm run lint
-
-# Fix linting issues
-npm run lint:fix
-
-# Format code
-npm run format
-
-# Type checking
+# Type checking (fully implemented)
 npm run typecheck
+
+# Build verification
+npm run build
+
+# Note: Linting and formatting are currently disabled but will be restored in future versions
 ```
 
 ### Building
@@ -241,7 +238,7 @@ The project includes automated CI/CD with:
 ## 📊 Performance
 
 - **Efficient**: Uses stdio transport for optimal MCP performance
-- **Scalable**: Handles multiple concurrent requests
+- **Demo Mode**: Runs without MFLUX installation for development and testing
 - **Optimized**: Built-in SVG optimization reduces file sizes by 20-40%
 - **Cached**: Generation history and model status caching
 

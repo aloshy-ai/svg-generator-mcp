@@ -15,8 +15,10 @@ export class ModelService {
       this.isInitialized = true;
       logger.info("Model service initialized successfully");
     } catch (error) {
-      logger.error("Failed to initialize Model service:", error);
-      throw error;
+      logger.warn("Model service initialized with limited functionality:", error);
+      // Still mark as initialized but with demo models
+      this.availableModels = this.getDemoModels();
+      this.isInitialized = true;
     }
   }
 
@@ -179,13 +181,11 @@ print("CHECKPOINT_NOT_FOUND")
         pythonOptions: ['-u'], // Unbuffered output
       };
 
-      PythonShell.runString(script, options, (err, results) => {
-        if (err) {
-          reject(err);
-        } else {
-          const output = results?.join('\n') || '';
-          resolve(output);
-        }
+      PythonShell.runString(script, options).then((results) => {
+        const output = results?.join('\n') || '';
+        resolve(output);
+      }).catch((err) => {
+        reject(err);
       });
     });
   }
@@ -233,5 +233,36 @@ print("CHECKPOINT_NOT_FOUND")
     } else {
       throw new Error(`No download URL available for ${modelName}`);
     }
+  }
+
+  private getDemoModels(): ModelInfo[] {
+    return [
+      {
+        name: "FLUX Dev (Demo)",
+        type: "base_model",
+        status: "not_downloaded",
+        size: "~12GB",
+        description: "FLUX development model - requires MFLUX installation",
+        path: "dev",
+      },
+      {
+        name: "Vector SVG Laser LoRA (Demo)",
+        type: "lora",
+        status: "not_downloaded",
+        size: "~100MB",
+        description: "LoRA model for vector SVG generation - requires manual download",
+        path: "vector-svg-laser-lora",
+        url: "https://civitai.com/models/1541480/vector-svg-laser?modelVersionId=1744149",
+      },
+      {
+        name: "FluxxxMix Checkpoint (Demo)",
+        type: "checkpoint",
+        status: "not_downloaded",
+        size: "~2GB",
+        description: "Checkpoint for colorful illustrations - requires manual download",
+        path: "fluxxxmix-checkpoint",
+        url: "https://civitai.com/models/1726621?modelVersionId=1954014",
+      },
+    ];
   }
 }
