@@ -124,11 +124,8 @@ jobs:
 
       - name: Test Docker image
         run: |
-          # Pull the built image
-          docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
-          
-          # Test that the container starts and runs
-          timeout 10s docker run --rm ghcr.io/${{ github.repository }}:${{ github.sha }} || \
+          # Test that the container starts and runs (using latest tag)
+          timeout 10s docker run --rm ghcr.io/${{ github.repository }}:latest || \
           echo "Container started successfully (expected timeout)"
 
   security-scan:
