@@ -1,0 +1,45 @@
+# Node modules
+node_modules/
+npm-debug.log*
+
+# Build outputs (will be created inside container)
+dist/
+
+# Git
+.git/
+.gitignore
+
+# CI/CD
+.github/
+
+# Documentation
+*.md
+LICENSE
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+*.test.ts
+**/*.test.ts
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+
+# Generated files
+generation_history.json
+*.svg
+*.png
+
+# Temporary files
+tmp/
+temp/

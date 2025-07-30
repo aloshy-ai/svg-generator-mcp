@@ -25,7 +25,20 @@ A professional Model Context Protocol (MCP) server for generating high-quality S
 
 ## 🛠️ Installation
 
-### Current Installation (Development/Source)
+### Quick Start with Docker (Recommended)
+
+```bash
+# Single command to run the MCP server
+docker run --rm -it ghcr.io/aloshy-ai/svg-generator-mcp:latest
+
+# Run in background (daemon mode)
+docker run -d --name svg-generator ghcr.io/aloshy-ai/svg-generator-mcp:latest
+
+# Stop the background container
+docker stop svg-generator && docker rm svg-generator
+```
+
+### Development Installation (Source)
 
 ```bash
 # Clone the repository
@@ -68,8 +81,19 @@ This server requires the following models to function properly:
 
 ### Using with Claude Desktop
 
-Add to your Claude Desktop configuration:
+#### Docker Configuration (Recommended)
+```json
+{
+  "mcpServers": {
+    "svg-generator": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "ghcr.io/aloshy-ai/svg-generator-mcp:latest"]
+    }
+  }
+}
+```
 
+#### Source Installation Configuration
 ```json
 {
   "mcpServers": {
@@ -81,7 +105,7 @@ Add to your Claude Desktop configuration:
 }
 ```
 
-Or if you used `npm link`:
+#### Global Installation Configuration
 ```json
 {
   "mcpServers": {
@@ -94,6 +118,13 @@ Or if you used `npm link`:
 
 ### Direct Usage
 
+#### Docker
+```bash
+# Run with Docker (recommended)
+docker run --rm -it ghcr.io/aloshy-ai/svg-generator-mcp:latest
+```
+
+#### Source Installation
 ```bash
 # Start the MCP server (from project directory)
 npm start
@@ -103,10 +134,9 @@ node dist/index.js
 
 # Or if you used npm link
 svg-generator-mcp
-
-# Note: Server runs in demo mode if MFLUX is not installed
-# Demo mode provides placeholder SVG generation for testing
 ```
+
+> **Note**: Server runs in demo mode if MFLUX is not installed. Demo mode provides placeholder SVG generation for testing.
 
 ## 🔧 Available Tools
 
