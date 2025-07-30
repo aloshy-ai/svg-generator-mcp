@@ -98,6 +98,7 @@ jobs:
       - name: Copy build artifacts to Python package
         run: |
           cp -r dist svg_generator_mcp/
+          cp -r node_modules svg_generator_mcp/
           cp package.json svg_generator_mcp/
           cp package-lock.json svg_generator_mcp/
 
@@ -206,6 +207,7 @@ jobs:
       - name: Copy build artifacts to Python package
         run: |
           cp -r dist svg_generator_mcp/
+          cp -r node_modules svg_generator_mcp/
           cp package.json svg_generator_mcp/
           cp package-lock.json svg_generator_mcp/
 
