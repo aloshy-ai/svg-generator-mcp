@@ -4,15 +4,12 @@ FROM node:18-alpine
 # Install Python and dependencies for FLUX/MFLUX support
 RUN apk add --no-cache python3 py3-pip git build-base python3-dev
 
+# Create a virtual environment
+RUN python3 -m venv /app/venv
+ENV PATH="/app/venv/bin:$PATH"
+
 # Install FLUX/MFLUX based on architecture
-RUN if [ "$(uname -m)" = "aarch64" ]; then \
-    # Apple Silicon (ARM64) - install MFLUX
-    pip3 install --no-cache-dir mflux; \
-else \
-    # Intel/AMD (x86_64) - install FLUX with CPU support
-    pip3 install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu && \
-    pip3 install --no-cache-dir diffusers transformers accelerate; \
-fi
+RUN if [ "$(uname -m)" = "aarch64" ]; then     # Apple Silicon (ARM64) - install MFLUX    pip3 install --no-cache-dir --break-system-packages mflux; else     # Intel/AMD (x86_64) - install FLUX with CPU support    pip3 install --no-cache-dir --break-system-packages torch torchvision --index-url https://download.pytorch.org/whl/cpu &&     pip3 install --no-cache-dir --break-system-packages diffusers transformers accelerate; fi
 
 # Create app directory and user
 RUN addgroup -g 1001 -S nodejs && \
