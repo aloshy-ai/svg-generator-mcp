@@ -9,6 +9,9 @@ RUN addgroup -g 1001 -S nodejs && \
     adduser -S mcp -u 1001
 WORKDIR /app
 
+# Create data directory for persistent storage
+RUN mkdir -p /app/data && chown mcp:nodejs /app/data
+
 # Copy package files and install dependencies (skip prepare script)
 COPY --chown=mcp:nodejs package*.json ./
 RUN npm ci --ignore-scripts
@@ -20,8 +23,8 @@ RUN npm run build
 # Switch to non-root user
 USER mcp
 
-# Expose port (though MCP typically uses stdio)
-EXPOSE 3000
+# Create volume for persistent data
+VOLUME ["/app/data"]
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
