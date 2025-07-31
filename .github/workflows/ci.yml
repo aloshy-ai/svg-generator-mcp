@@ -118,12 +118,18 @@ jobs:
           retention-days: 7
 
       - name: Publish to PyPI
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.PYPI_API_TOKEN != ''
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
         run: |
           python -m twine upload dist/* --verbose
+          
+      - name: Skip PyPI publishing (no token configured)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.PYPI_API_TOKEN == ''
+        run: |
+          echo "⚠️ PyPI publishing skipped - PYPI_API_TOKEN secret not configured"
+          echo "📦 Package built successfully and available as artifact"
 
   integration-test:
     name: Integration Tests
